@@ -21,6 +21,7 @@ type Bot struct {
 func NewBot(token string, proxy *http.Client) (*Bot, error) {
 	var api *tgbotapi.BotAPI
 	var err error
+
 	if proxy != nil {
 		api, err = tgbotapi.NewBotAPIWithClient(token, tgbotapi.APIEndpoint, proxy)
 	} else {
@@ -29,6 +30,29 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	commands := []tgbotapi.BotCommand{
+		{
+			Command:     "user",
+			Description: "设置用户名",
+		},
+		{
+			Command:     "password",
+			Description: "设置密码",
+		},
+		{
+			Command:     "gpuvalid",
+			Description: "查看GPU空闲情况",
+		},
+	}
+
+	// 设置命令菜单
+	cmdConfig := tgbotapi.NewSetMyCommands(commands...)
+	_, err = api.Request(cmdConfig)
+	if err != nil {
+		return nil, fmt.Errorf("设置命令菜单失败: %v", err)
+	}
+
 	return &Bot{
 		api:        api,
 		userConfig: make(map[int]*models.AutoDLConfig),
