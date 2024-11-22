@@ -3,6 +3,8 @@ package main
 import (
 	"autodl_bot/bot"
 	"flag"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -16,22 +18,26 @@ var (
 	tokenFlag = flag.String("token", "", "telegram bot token")
 )
 
-func setupLogger() *os.File {
+func setupLogger() (*os.File, error) {
 	if err := os.MkdirAll("logs", os.ModePerm); err != nil {
-		log.Fatalf("无法创建日志目录：%v", err)
+		return nil, fmt.Errorf("无法创建日志目录: %v", err)
 	}
 
 	logFile, err := os.OpenFile(
 		"logs/bot.log",
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-		os.ModePerm)
+		os.ModePerm,
+	)
 	if err != nil {
-		log.Fatalf("无法创建日志文件，请检查权限：%v", err)
+		return nil, fmt.Errorf("无法创建日志文件: %v", err)
 	}
-	log.SetOutput(logFile)
+
+	// 同时输出到标准输出和日志文件
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(multiWriter)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	return logFile
+	return logFile, nil
 }
 func getToken() string {
 	if *tokenFlag != "" {
@@ -64,8 +70,11 @@ func getProxyClient() *http.Client {
 func main() {
 	flag.Parse()
 
-	logFile := setupLogger()
-	defer logFile.Close()
+	logger, err := setupLogger()
+	if err != nil {
+		log.Fatalf("无法设置日志: %v", err)
+	}
+	defer logger.Close()
 
 	tgToken := getToken()
 	tgbot, err := bot.NewBot(tgToken, getProxyClient())
@@ -76,9 +85,10 @@ func main() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
+	log.Printf("Bot已启动，时间: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+
 	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("Bot已启动，时间: %s\n", time.Now().Format("2006-01-02 15:04:05"))
 		errCh <- tgbot.Start()
 	}()
 
