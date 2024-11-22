@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/go-resty/resty/v2"
@@ -60,6 +61,7 @@ func (c *AutoDLClient) hashPassword(password string) string {
 	hasher.Write([]byte(password))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
+
 func (c *AutoDLClient) Login() error {
 	loginReqest := models.LoginRequest{
 		Phone:     c.username,
@@ -97,4 +99,71 @@ func (c *AutoDLClient) Login() error {
 	}
 	c.setToken(passportResponse.Data.Token)
 	return nil
+}
+
+func (c *AutoDLClient) GetInstances() ([]models.Instance, error) {
+	token := c.getToken()
+	if token == "" {
+		if err := c.Login(); err != nil {
+			return nil, err
+		}
+		token = c.getToken()
+	}
+
+	instanceRequest := models.InstanceRequest{
+		DateFrom:   "",
+		DateTo:     "",
+		PageIndex:  1,
+		PageSize:   10,
+		Status:     []string{},
+		ChargeType: []string{},
+	}
+
+	var instanceResponse models.InstanceResponse
+	_, err := c.client.R().
+		SetHeader("authorization", token).
+		SetBody(instanceRequest).
+		SetResult(&instanceResponse).
+		Post(InstancePath)
+
+	if err != nil {
+		return nil, err
+	}
+	// check if token valid
+	if instanceResponse.Code != "AuthorizeFailed" {
+		// re-login
+		if err := c.Login(); err != nil {
+			return nil, err
+		}
+		_, err := c.client.R().
+			SetHeader("authorization", c.getToken()).
+			SetBody(instanceRequest).
+			SetResult(&instanceResponse).
+			Post(InstancePath)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if instanceResponse.Code != "Success" {
+		return nil, errors.New(instanceResponse.Msg)
+	}
+	return instanceResponse.Data.List, nil
+}
+
+func (c *AutoDLClient) GetGPUStatus() (string, error) {
+	instances, err := c.GetInstances()
+	if err != nil {
+		return "", err
+	}
+
+	var result string
+	for _, instance := range instances {
+		result += fmt.Sprintf("机器: %s-%s\n", instance.RegionName, instance.MachineAlias)
+		result += fmt.Sprintf("GPU: %d/%d\n", instance.GpuIdleNum, instance.GpuAllNum)
+		result += "----------------\n"
+
+	}
+	return result, nil
 }
