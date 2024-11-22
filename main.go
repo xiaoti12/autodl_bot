@@ -5,6 +5,8 @@ import (
 	"flag"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -50,16 +52,28 @@ func main() {
 	defer logFile.Close()
 
 	tgToken := getToken()
-
 	tgbot, err := bot.NewBot(tgToken)
 	if err != nil {
 		log.Fatalf("无法创建telegram bot: %v", err)
 	}
 
-	err = tgbot.Start()
-	if err != nil {
-		log.Fatalf("无法启动telegram bot: %v", err)
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	errCh := make(chan error, 1)
+	go func() {
+		log.Printf("Bot已启动，时间: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+		errCh <- tgbot.Start()
+	}()
+
+	select {
+	case sig := <-sigCh:
+		log.Printf("接收到退出信号：%s", sig)
+	case err := <-errCh:
+		if err != nil {
+			log.Printf("Bot出错，请检查错误：%v", err)
+		}
 	}
 
-	log.Printf("Bot已启动，时间: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+	log.Printf("Bot已退出，时间: %s\n", time.Now().Format("2006-01-02 15:04:05"))
 }
