@@ -3,6 +3,8 @@ package bot
 import (
 	"autodl_bot/client"
 	"autodl_bot/config"
+	"fmt"
+	"log"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -68,5 +70,54 @@ func (b *Bot) Start() error {
 	return nil
 }
 func (b *Bot) Command(msg *tgbotapi.Message, cfg *config.Config) {
+	var reply string
 
+	switch msg.Command() {
+	case "start", "help":
+		reply = `支持的命令：
+/user - 设置AutoDL用户名（手机号）
+/password - 设置AutoDL密码
+/gpuvalid - 查看所有GPU实例空闲情况`
+
+	case "user":
+		if msg.CommandArguments() == "" {
+			reply = "请在命令后附带用户名，例如：/user 18900000000"
+		} else {
+			cfg.AutoDLUser = msg.CommandArguments()
+			b.SetUserConfig(int(msg.From.ID), cfg)
+			reply = "用户名设置成功"
+		}
+
+	case "password":
+		if msg.CommandArguments() == "" {
+			reply = "请在命令后附带密码，例如：/password 123456"
+		} else {
+			cfg.AutoDLPass = msg.CommandArguments()
+			b.SetUserConfig(int(msg.From.ID), cfg)
+			reply = "密码设置成功"
+		}
+
+	case "gpuvalid":
+		if cfg.AutoDLUser == "" || cfg.AutoDLPass == "" {
+			reply = "请先设置用户名和密码"
+		} else {
+			autodlClient := client.NewAutoDLClient(cfg.AutoDLUser, cfg.AutoDLPass)
+			gpuStatus, err := autodlClient.GetGPUStatus()
+			if err != nil {
+				reply = fmt.Sprintf("获取GPU状态失败：%v", err)
+			} else {
+				reply = gpuStatus
+			}
+		}
+
+	default:
+		reply = "未知命令，请使用 /help 查看支持的命令"
+	}
+
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, reply)
+
+	_, err := b.api.Send(replyMsg)
+	if err != nil {
+		log.Printf("error sending message: %v", err)
+	}
 }
