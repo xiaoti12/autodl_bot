@@ -2,7 +2,7 @@ package bot
 
 import (
 	"autodl_bot/client"
-	"autodl_bot/config"
+	"autodl_bot/models"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,7 +14,7 @@ import (
 type Bot struct {
 	api         *tgbotapi.BotAPI
 	autodl      *client.AutoDLClient
-	userConfig  map[int]*config.Config
+	userConfig  map[int]*models.AutoDLConfig
 	configMutex sync.RWMutex
 }
 
@@ -31,21 +31,21 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 	}
 	return &Bot{
 		api:        api,
-		userConfig: make(map[int]*config.Config),
+		userConfig: make(map[int]*models.AutoDLConfig),
 	}, nil
 }
-func (b *Bot) getUserConfig(userId int) *config.Config {
+func (b *Bot) getUserConfig(userId int) *models.AutoDLConfig {
 	b.configMutex.RLock()
 	defer b.configMutex.RUnlock()
 
 	cfg, exist := b.userConfig[userId]
 	if !exist {
-		cfg = &config.Config{}
+		cfg = &models.AutoDLConfig{}
 		b.userConfig[userId] = cfg
 	}
 	return cfg
 }
-func (b *Bot) SetUserConfig(userId int, cfg *config.Config) {
+func (b *Bot) SetUserConfig(userId int, cfg *models.AutoDLConfig) {
 	b.configMutex.Lock()
 	defer b.configMutex.Unlock()
 	b.userConfig[userId] = cfg
@@ -86,7 +86,7 @@ func (b *Bot) Start() error {
 	}
 	return nil
 }
-func (b *Bot) Command(msg *tgbotapi.Message, cfg *config.Config) {
+func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 	var reply string
 
 	switch msg.Command() {

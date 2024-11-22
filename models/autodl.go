@@ -55,3 +55,8 @@ type InstanceResponse struct {
 	} `json:"data"`
 	Msg string `json:"msg"`
 }
+
+type AutoDLConfig struct {
+	AutoDLUser string
+	AutoDLPass string
+}
