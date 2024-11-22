@@ -51,6 +51,16 @@ func (b *Bot) SetUserConfig(userId int, cfg *config.Config) {
 	b.userConfig[userId] = cfg
 }
 
+func (b *Bot) initAutoDLClient(userID int) error {
+	cfg := b.getUserConfig(userID)
+	if cfg.AutoDLUser == "" || cfg.AutoDLPass == "" {
+		return fmt.Errorf("请先设置AutoDL用户名和密码")
+	}
+
+	b.autodl = client.NewAutoDLClient(cfg.AutoDLUser, cfg.AutoDLPass)
+	return nil
+}
+
 func (b *Bot) Start() error {
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
@@ -102,19 +112,24 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *config.Config) {
 			cfg.AutoDLPass = msg.CommandArguments()
 			b.SetUserConfig(int(msg.From.ID), cfg)
 			reply = "密码设置成功"
+
+			b.initAutoDLClient(int(msg.From.ID))
 		}
 
 	case "gpuvalid":
-		if cfg.AutoDLUser == "" || cfg.AutoDLPass == "" {
-			reply = "请先设置用户名和密码"
-		} else {
-			autodlClient := client.NewAutoDLClient(cfg.AutoDLUser, cfg.AutoDLPass)
-			gpuStatus, err := autodlClient.GetGPUStatus()
+		if b.autodl == nil {
+			err := b.initAutoDLClient(int(msg.From.ID))
 			if err != nil {
-				reply = fmt.Sprintf("获取GPU状态失败：%v", err)
-			} else {
-				reply = gpuStatus
+				reply = err.Error()
+				break
 			}
+		}
+
+		gpuStatus, err := b.autodl.GetGPUStatus()
+		if err != nil {
+			reply = fmt.Sprintf("获取GPU状态失败：%v", err)
+		} else {
+			reply = gpuStatus
 		}
 
 	default:
