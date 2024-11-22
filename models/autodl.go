@@ -9,11 +9,13 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Code string `json:"code"`
-	Data struct {
-		Ticket string `json:"ticket"`
-	} `json:"data"`
-	Msg string `json:"msg"`
+	Code string    `json:"code"`
+	Data LoginData `json:"data"`
+	Msg  string    `json:"msg"`
+}
+
+type LoginData struct {
+	Ticket string `json:"ticket"`
 }
 
 type PassportRequest struct {
@@ -21,11 +23,13 @@ type PassportRequest struct {
 }
 
 type PassportResponse struct {
-	Code string `json:"code"`
-	Data struct {
-		Token string `json:"token"`
-	} `json:"data"`
-	Msg string `json:"msg"`
+	Code string       `json:"code"`
+	Data PassportData `json:"data"`
+	Msg  string       `json:"msg"`
+}
+
+type PassportData struct {
+	Token string `json:"token"`
 }
 
 type InstanceRequest struct {
