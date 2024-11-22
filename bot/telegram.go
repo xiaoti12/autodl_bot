@@ -5,6 +5,7 @@ import (
 	"autodl_bot/config"
 	"fmt"
 	"log"
+	"net/http"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -17,10 +18,16 @@ type Bot struct {
 	configMutex sync.RWMutex
 }
 
-func NewBot(token string) (*Bot, error) {
-	api, error := tgbotapi.NewBotAPI(token)
-	if error != nil {
-		return nil, error
+func NewBot(token string, proxy *http.Client) (*Bot, error) {
+	var api *tgbotapi.BotAPI
+	var err error
+	if proxy != nil {
+		api, err = tgbotapi.NewBotAPIWithClient(token, tgbotapi.APIEndpoint, proxy)
+	} else {
+		api, err = tgbotapi.NewBotAPI(token)
+	}
+	if err != nil {
+		return nil, err
 	}
 	return &Bot{
 		api:        api,

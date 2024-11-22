@@ -4,6 +4,8 @@ import (
 	"autodl_bot/bot"
 	"flag"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -45,6 +47,20 @@ func getToken() string {
 	return ""
 }
 
+func getProxyClient() *http.Client {
+	proxyURL, err := url.Parse("http://127.0.0.1:7890")
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+		},
+	}
+	return client
+}
+
 func main() {
 	flag.Parse()
 
@@ -52,7 +68,7 @@ func main() {
 	defer logFile.Close()
 
 	tgToken := getToken()
-	tgbot, err := bot.NewBot(tgToken)
+	tgbot, err := bot.NewBot(tgToken, getProxyClient())
 	if err != nil {
 		log.Fatalf("无法创建telegram bot: %v", err)
 	}
