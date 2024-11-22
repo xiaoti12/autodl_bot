@@ -159,11 +159,12 @@ func (c *AutoDLClient) GetGPUStatus() (string, error) {
 	}
 
 	var result string
-	for _, instance := range instances {
+	for i, instance := range instances {
 		result += fmt.Sprintf("机器: %s-%s\n", instance.RegionName, instance.MachineAlias)
 		result += fmt.Sprintf("GPU: %d/%d\n", instance.GpuIdleNum, instance.GpuAllNum)
-		result += "----------------\n"
-
+		if i < len(instances)-1 {
+			result += "----------------\n"
+		}
 	}
 	return result, nil
 }
