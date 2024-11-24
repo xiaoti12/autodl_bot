@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -162,9 +163,38 @@ func (c *AutoDLClient) GetGPUStatus() (string, error) {
 	for i, instance := range instances {
 		result += fmt.Sprintf("机器: %s-%s\n", instance.RegionName, instance.MachineAlias)
 		result += fmt.Sprintf("GPU: %d/%d\n", instance.GpuIdleNum, instance.GpuAllNum)
+		result += getReleaseTime(instance.StoppedAt.Time)
 		if i < len(instances)-1 {
 			result += "----------------\n"
 		}
 	}
 	return result, nil
+}
+
+func getReleaseTime(stoppedTime string) string {
+	result := "释放时间："
+	stoppedAt, err := time.Parse("2006-01-02T15:04:05+08:00", stoppedTime)
+	if err != nil {
+		return result + "解析失败"
+	}
+	releaseTime := stoppedAt.Add(15 * 24 * time.Hour).Sub(time.Now())
+	if releaseTime > 0 {
+		result += fmt.Sprintf("释放时间: %s后释放\n", formatDuration(releaseTime))
+	} else {
+		result += "已释放"
+	}
+	return result
+}
+
+func formatDuration(d time.Duration) string {
+	days := d / (24 * time.Hour)
+	hours := (d % (24 * time.Hour)) / time.Hour
+	minutes := (d % time.Hour) / time.Minute
+
+	if days > 0 {
+		return fmt.Sprintf("%d天%d小时%d分钟", days, hours, minutes)
+	} else if hours > 0 {
+		return fmt.Sprintf("%d小时%d分钟", hours, minutes)
+	}
+	return fmt.Sprintf("%d分钟", minutes)
 }

@@ -101,6 +101,9 @@ func handleInstance(t *testing.T, w http.ResponseWriter, r *http.Request) {
 					"region_name":   "test-region",
 					"gpu_all_num":   4,
 					"gpu_idle_num":  2,
+					"stopped_at": map[string]interface{}{
+						"Time": "2024-11-24T16:54:09+08:00",
+					},
 				},
 			},
 		},
@@ -153,6 +156,8 @@ func TestGetGPUStatus(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, status, "test-machine")
 	assert.Contains(t, status, "test-region")
+
+	t.Logf("Get GPU status completed, status: %s", status)
 }
 
 func TestHashPassword(t *testing.T) {

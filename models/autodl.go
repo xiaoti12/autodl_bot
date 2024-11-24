@@ -46,6 +46,10 @@ type Instance struct {
 	RegionName   string `json:"region_name"`
 	GpuAllNum    int    `json:"gpu_all_num"`
 	GpuIdleNum   int    `json:"gpu_idle_num"`
+	UUID         string `json:"uuid"`
+	StoppedAt    struct {
+		Time string `json:"time"`
+	} `json:"stopped_at"`
 }
 
 type InstanceResponse struct {
