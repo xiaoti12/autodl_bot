@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -79,9 +80,11 @@ func (c *AutoDLClient) Login() error {
 		SetResult(&loginResponse).
 		Post(LoginPATH)
 	if err != nil {
+		log.Printf("[ERROR] 登录请求失败: %v", err)
 		return err
 	}
 	if loginResponse.Code != "Success" {
+		log.Printf("[ERROR] 登录失败: %v", err)
 		return errors.New(loginResponse.Msg)
 	}
 
@@ -95,12 +98,15 @@ func (c *AutoDLClient) Login() error {
 		SetResult(&passportResponse).
 		Post(PassportPath)
 	if err != nil {
+		log.Printf("[ERROR] 获取 token 请求失败: %v", err)
 		return err
 	}
 	if passportResponse.Code != "Success" {
+		log.Printf("[ERROR] 获取 token 失败: %v", err)
 		return errors.New(passportResponse.Msg)
 	}
 	c.setToken(passportResponse.Data.Token)
+	log.Printf("[INFO] 用户%s登录成功，获取到 token", c.username)
 	return nil
 }
 
@@ -145,13 +151,17 @@ func (c *AutoDLClient) GetInstances() ([]models.Instance, error) {
 			Post(InstancePath)
 
 		if err != nil {
+			log.Printf("[ERROR] 查询实例请求失败: %v", err)
 			return nil, err
 		}
 	}
 
 	if instanceResponse.Code != "Success" {
+		log.Printf("[ERROR] 查询实例失败: %v", err)
 		return nil, errors.New(instanceResponse.Msg)
 	}
+
+	log.Printf("[INFO] 用户%s查询实例成功", c.username)
 	return instanceResponse.Data.List, nil
 }
 
@@ -195,6 +205,8 @@ func (c *AutoDLClient) PowerOn(uuid string) error {
 	if response.Code != "Success" {
 		return fmt.Errorf("开机失败: %s", response.Msg)
 	}
+
+	log.Printf("[INFO] 用户%s实例 %s 开机成功", c.username, uuid)
 	return nil
 }
 
@@ -218,6 +230,8 @@ func (c *AutoDLClient) PowerOff(uuid string) error {
 	if response.Code != "Success" {
 		return fmt.Errorf("关机失败: %s", response.Msg)
 	}
+
+	log.Printf("[INFO] 用户%s实例 %s 关机成功", c.username, uuid)
 	return nil
 }
 
