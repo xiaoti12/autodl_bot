@@ -243,7 +243,7 @@ func getReleaseTime(stoppedTime string) string {
 	}
 	releaseTime := stoppedAt.Add(15 * 24 * time.Hour).Sub(time.Now())
 	if releaseTime > 0 {
-		result += fmt.Sprintf("释放时间: %s后释放\n", formatDuration(releaseTime))
+		result += fmt.Sprintf("%s后释放\n", formatDuration(releaseTime))
 	} else {
 		result += "已释放"
 	}
