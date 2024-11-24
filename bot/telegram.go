@@ -44,6 +44,14 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 			Command:     "gpuvalid",
 			Description: "查看GPU空闲情况",
 		},
+		{
+			Command:     "start",
+			Description: "启动GPU实例",
+		},
+		{
+			Command:     "stop",
+			Description: "关闭GPU实例",
+		},
 	}
 
 	// 设置命令菜单
@@ -114,11 +122,13 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 	var reply string
 
 	switch msg.Command() {
-	case "start", "help":
+	case "help":
 		reply = `支持的命令：
 /user - 设置AutoDL用户名（手机号）
 /password - 设置AutoDL密码
-/gpuvalid - 查看所有GPU实例空闲情况`
+/gpuvalid - 查看所有GPU实例空闲情况
+/start - 打开实例
+/stop - 关闭实例`
 
 	case "user":
 		if msg.CommandArguments() == "" {
@@ -154,6 +164,43 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 			reply = fmt.Sprintf("获取GPU状态失败：%v", err)
 		} else {
 			reply = gpuStatus
+		}
+
+	case "start":
+		if msg.CommandArguments() == "" {
+			reply = "请在命令后附带实例UUID，例如：/start xx-yy"
+		} else if b.autodl == nil {
+			err := b.initAutoDLClient(int(msg.From.ID))
+			if err != nil {
+				reply = err.Error()
+				break
+			}
+		} else {
+			uuid := msg.CommandArguments()
+			err := b.autodl.PowerOn(uuid)
+			if err != nil {
+				reply = err.Error()
+			} else {
+				reply = fmt.Sprintf("实例 %s 开机成功", uuid)
+			}
+		}
+	case "stop":
+		if msg.CommandArguments() == "" {
+			reply = "请在命令后附带实例UUID，例如：/stop xx-yy"
+		} else if b.autodl == nil {
+			err := b.initAutoDLClient(int(msg.From.ID))
+			if err != nil {
+				reply = err.Error()
+				break
+			}
+		} else {
+			uuid := msg.CommandArguments()
+			err := b.autodl.PowerOff(uuid)
+			if err != nil {
+				reply = err.Error()
+			} else {
+				reply = fmt.Sprintf("实例 %s 关机成功", uuid)
+			}
 		}
 
 	default:

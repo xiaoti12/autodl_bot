@@ -99,6 +99,7 @@ func handleInstance(t *testing.T, w http.ResponseWriter, r *http.Request) {
 				{
 					"machine_alias": "test-machine",
 					"region_name":   "test-region",
+					"uuid":          "test-uuid",
 					"gpu_all_num":   4,
 					"gpu_idle_num":  2,
 					"stopped_at": map[string]interface{}{

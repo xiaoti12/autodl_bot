@@ -60,6 +60,11 @@ type InstanceResponse struct {
 	Msg string `json:"msg"`
 }
 
+type PowerResponse struct {
+	Code string `json:"code"`
+	Msg  string `json:"msg"`
+}
+
 type AutoDLConfig struct {
 	Username string
 	Password string

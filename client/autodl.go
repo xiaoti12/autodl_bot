@@ -17,6 +17,8 @@ const (
 	LoginPATH    = "/new_login"
 	PassportPath = "/passport"
 	InstancePath = "/instance"
+	PowerOnPath  = "/instance/poweron"
+	PowerOffPath = "/instance/poweroff"
 )
 
 type AutoDLClient struct {
@@ -162,6 +164,7 @@ func (c *AutoDLClient) GetGPUStatus() (string, error) {
 	var result string
 	for i, instance := range instances {
 		result += fmt.Sprintf("机器: %s-%s\n", instance.RegionName, instance.MachineAlias)
+		result += "UUID: " + instance.UUID + "\n"
 		result += fmt.Sprintf("GPU: %d/%d\n", instance.GpuIdleNum, instance.GpuAllNum)
 		result += getReleaseTime(instance.StoppedAt.Time)
 		if i < len(instances)-1 {
@@ -169,6 +172,53 @@ func (c *AutoDLClient) GetGPUStatus() (string, error) {
 		}
 	}
 	return result, nil
+}
+
+func (c *AutoDLClient) PowerOn(uuid string) error {
+	if uuid == "" {
+		return errors.New("实例UUID不能为空")
+	}
+
+	body := map[string]string{
+		"instance_uuid": uuid,
+	}
+	var response models.PowerResponse
+
+	_, err := c.client.R().
+		SetHeader("authorization", c.getToken()).
+		SetBody(body).
+		SetResult(&response).
+		Post(PowerOnPath)
+	if err != nil {
+		return fmt.Errorf("开机请求失败: %v", err)
+	}
+	if response.Code != "Success" {
+		return fmt.Errorf("开机失败: %s", response.Msg)
+	}
+	return nil
+}
+
+func (c *AutoDLClient) PowerOff(uuid string) error {
+	if uuid == "" {
+		return errors.New("实例UUID不能为空")
+	}
+
+	body := map[string]string{
+		"instance_uuid": uuid,
+	}
+	var response models.PowerResponse
+	_, err := c.client.R().
+		SetHeader("authorization", c.getToken()).
+		SetBody(body).
+		SetResult(&response).
+		Post(PowerOffPath)
+	if err != nil {
+		return fmt.Errorf("关机请求失败: %v", err)
+	}
+	if response.Code != "Success" {
+		return fmt.Errorf("关机失败: %s", response.Msg)
+	}
+	return nil
 }
 
 func getReleaseTime(stoppedTime string) string {
