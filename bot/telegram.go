@@ -77,11 +77,11 @@ func (b *Bot) SetUserConfig(userId int, cfg *models.AutoDLConfig) {
 
 func (b *Bot) initAutoDLClient(userID int) error {
 	cfg := b.getUserConfig(userID)
-	if cfg.AutoDLUser == "" || cfg.AutoDLPass == "" {
+	if cfg.Username == "" || cfg.Password == "" {
 		return fmt.Errorf("请先设置AutoDL用户名和密码")
 	}
 
-	b.autodl = client.NewAutoDLClient(cfg.AutoDLUser, cfg.AutoDLPass)
+	b.autodl = client.NewAutoDLClient(cfg.Username, cfg.Password)
 	return nil
 }
 
@@ -124,7 +124,7 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 		if msg.CommandArguments() == "" {
 			reply = "请在命令后附带用户名，例如：/user 18900000000"
 		} else {
-			cfg.AutoDLUser = msg.CommandArguments()
+			cfg.Username = msg.CommandArguments()
 			b.SetUserConfig(int(msg.From.ID), cfg)
 			reply = "用户名设置成功"
 		}
@@ -133,7 +133,7 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 		if msg.CommandArguments() == "" {
 			reply = "请在命令后附带密码，例如：/password 123456"
 		} else {
-			cfg.AutoDLPass = msg.CommandArguments()
+			cfg.Password = msg.CommandArguments()
 			b.SetUserConfig(int(msg.From.ID), cfg)
 			reply = "密码设置成功"
 

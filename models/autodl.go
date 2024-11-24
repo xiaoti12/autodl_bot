@@ -57,6 +57,6 @@ type InstanceResponse struct {
 }
 
 type AutoDLConfig struct {
-	AutoDLUser string
-	AutoDLPass string
+	Username string
+	Password string
 }
