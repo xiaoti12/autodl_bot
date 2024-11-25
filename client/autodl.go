@@ -135,7 +135,7 @@ func (c *AutoDLClient) GetInstances() ([]models.Instance, error) {
 		return nil, err
 	}
 	// check if token valid
-	if instanceResponse.Code != "AuthorizeFailed" {
+	if instanceResponse.Code == "AuthorizeFailed" {
 		// re-login
 		log.Printf("[INFO] 用户%s登录过期，重新登录", c.username)
 		if err := c.Login(); err != nil {
