@@ -64,6 +64,10 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 			Command:     "stop",
 			Description: "关闭GPU实例",
 		},
+		{
+			Command:     "getuser",
+			Description: "列出当前用户",
+		},
 	}
 
 	// 设置命令菜单
@@ -106,6 +110,15 @@ func (b *Bot) SaveAllUserConfig() error {
 		}
 	}
 	return nil
+}
+
+func (b *Bot) CurrentUser(userId int) string {
+	cfg := b.getUserConfig(userId)
+	if cfg.Username != "" {
+		return "当前已设置用户: " + cfg.Username
+	} else {
+		return "当前未设置用户"
+	}
 }
 
 func (b *Bot) initAutoDLClient(userID int) error {
@@ -153,7 +166,8 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 /password - 设置AutoDL密码
 /gpuvalid - 查看所有GPU实例空闲情况
 /start - 打开实例
-/stop - 关闭实例`
+/stop - 关闭实例
+/getuser - 列出当前已设置的用户`
 
 	case "user":
 		if msg.CommandArguments() == "" {
@@ -228,6 +242,9 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 				reply = fmt.Sprintf("实例 %s 关机成功", uuid)
 			}
 		}
+
+	case "getuser":
+		reply = b.CurrentUser(int(msg.From.ID))
 
 	default:
 		reply = "未知命令，请使用 /help 查看支持的命令"
