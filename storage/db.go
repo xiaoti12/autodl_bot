@@ -32,7 +32,7 @@ func NewUserStorage() (*UserStorage, error) {
 	return &UserStorage{db: db}, nil
 }
 
-func (s *UserStorage) SaveUser(tgID int64, username, password string) error {
+func (s *UserStorage) SaveUser(tgID int, username, password string) error {
 	_, err := s.db.Exec(
 		"INSERT OR REPLACE INTO users (telegram_id, username, password) VALUES (?, ?, ?)",
 		tgID, username, password,

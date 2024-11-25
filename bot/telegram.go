@@ -3,6 +3,7 @@ package bot
 import (
 	"autodl_bot/client"
 	"autodl_bot/models"
+	"autodl_bot/storage"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,6 +17,7 @@ type Bot struct {
 	autodl      *client.AutoDLClient
 	userConfig  map[int]*models.AutoDLConfig
 	configMutex sync.RWMutex
+	storage     *storage.UserStorage
 }
 
 func NewBot(token string, proxy *http.Client) (*Bot, error) {
@@ -27,6 +29,16 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 	} else {
 		api, err = tgbotapi.NewBotAPI(token)
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	userStg, err := storage.NewUserStorage()
+	if err != nil {
+		return nil, err
+	}
+
+	userConfig, err := userStg.LoadUser()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +75,8 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 
 	return &Bot{
 		api:        api,
-		userConfig: make(map[int]*models.AutoDLConfig),
+		userConfig: userConfig,
+		storage:    userStg,
 	}, nil
 }
 func (b *Bot) getUserConfig(userId int) *models.AutoDLConfig {
@@ -81,6 +94,18 @@ func (b *Bot) SetUserConfig(userId int, cfg *models.AutoDLConfig) {
 	b.configMutex.Lock()
 	defer b.configMutex.Unlock()
 	b.userConfig[userId] = cfg
+}
+
+func (b *Bot) SaveAllUserConfig() error {
+	b.configMutex.Lock()
+	defer b.configMutex.Unlock()
+	for id, cfg := range b.userConfig {
+		err := b.storage.SaveUser(id, cfg.Username, cfg.Password)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (b *Bot) initAutoDLClient(userID int) error {

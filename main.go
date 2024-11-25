@@ -95,6 +95,12 @@ func main() {
 	select {
 	case sig := <-sigCh:
 		log.Printf("接收到退出信号：%s", sig)
+
+		log.Println("正在保存用户配置")
+		if err := tgbot.SaveAllUserConfig(); err != nil {
+			log.Printf("保存用户配置失败：%v", err)
+		}
+		log.Println("用户配置保存成功")
 	case err := <-errCh:
 		if err != nil {
 			log.Printf("Bot出错，请检查错误：%v", err)
