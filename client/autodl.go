@@ -60,16 +60,11 @@ func (c *AutoDLClient) setToken(token string) {
 	defer c.tokenMutex.Unlock()
 	c.token = token
 }
-func (c *AutoDLClient) hashPassword(password string) string {
-	hasher := sha1.New()
-	hasher.Write([]byte(password))
-	return hex.EncodeToString(hasher.Sum(nil))
-}
 
 func (c *AutoDLClient) Login() error {
 	loginReqest := models.LoginRequest{
 		Phone:     c.username,
-		Password:  c.hashPassword(c.password),
+		Password:  c.password,
 		VCode:     "",
 		PhoneArea: "+86",
 		PictureID: nil,
@@ -235,6 +230,12 @@ func (c *AutoDLClient) PowerOff(uuid string) error {
 
 	log.Printf("[INFO] 用户%s实例 %s 关机成功", c.username, uuid)
 	return nil
+}
+
+func HashPassword(rawPassword string) string {
+	hasher := sha1.New()
+	hasher.Write([]byte(rawPassword))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func getReleaseTime(stoppedTime string) string {

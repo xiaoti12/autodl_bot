@@ -143,7 +143,8 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 		if msg.CommandArguments() == "" {
 			reply = "请在命令后附带密码，例如：/password 123456"
 		} else {
-			cfg.Password = msg.CommandArguments()
+			rawPassword := msg.CommandArguments()
+			cfg.Password = client.HashPassword(rawPassword)
 			b.SetUserConfig(int(msg.From.ID), cfg)
 			reply = "密码设置成功"
 

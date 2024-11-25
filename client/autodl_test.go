@@ -162,8 +162,7 @@ func TestGetGPUStatus(t *testing.T) {
 }
 
 func TestHashPassword(t *testing.T) {
-	client := NewAutoDLClient("testuser", "testpass")
-	hash := client.hashPassword("testpass")
+	hash := HashPassword("testpass")
 	assert.NotEmpty(t, hash)
 	assert.Len(t, hash, 40) // SHA1 hash length
 	assert.Equal(t, hash, "206c80413b9a96c1312cc346b7d2517b84463edd")
