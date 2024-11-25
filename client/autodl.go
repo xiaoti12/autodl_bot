@@ -106,13 +106,14 @@ func (c *AutoDLClient) Login() error {
 		return errors.New(passportResponse.Msg)
 	}
 	c.setToken(passportResponse.Data.Token)
-	log.Printf("[INFO] 用户%s登录成功，获取到 token", c.username)
+	log.Printf("[INFO] 用户%s登录成功，获取到token", c.username)
 	return nil
 }
 
 func (c *AutoDLClient) GetInstances() ([]models.Instance, error) {
 	token := c.getToken()
 	if token == "" {
+		log.Printf("[INFO] 用户%stoken不存在，重新登录", c.username)
 		if err := c.Login(); err != nil {
 			return nil, err
 		}
@@ -141,6 +142,7 @@ func (c *AutoDLClient) GetInstances() ([]models.Instance, error) {
 	// check if token valid
 	if instanceResponse.Code != "AuthorizeFailed" {
 		// re-login
+		log.Printf("[INFO] 用户%s登录过期，重新登录", c.username)
 		if err := c.Login(); err != nil {
 			return nil, err
 		}
