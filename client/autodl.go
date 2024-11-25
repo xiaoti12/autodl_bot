@@ -18,8 +18,8 @@ const (
 	LoginPATH    = "/new_login"
 	PassportPath = "/passport"
 	InstancePath = "/instance"
-	PowerOnPath  = "/instance/poweron"
-	PowerOffPath = "/instance/poweroff"
+	PowerOnPath  = "/instance/power_on"
+	PowerOffPath = "/instance/power_off"
 )
 
 type AutoDLClient struct {
