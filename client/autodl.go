@@ -181,7 +181,7 @@ func (c *AutoDLClient) GetGPUStatus() (string, error) {
 	return result, nil
 }
 
-func (c *AutoDLClient) PowerOn(uuid string) error {
+func (c *AutoDLClient) PowerOn(uuid string, useCPU bool) error {
 	if uuid == "" {
 		return errors.New("实例UUID不能为空")
 	}
@@ -189,6 +189,10 @@ func (c *AutoDLClient) PowerOn(uuid string) error {
 	body := map[string]string{
 		"instance_uuid": uuid,
 	}
+	if useCPU {
+		body["payload"] = "non_gpu"
+	}
+
 	var response models.PowerResponse
 
 	_, err := c.client.R().

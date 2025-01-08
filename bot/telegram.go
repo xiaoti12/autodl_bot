@@ -61,6 +61,10 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 			Description: "启动GPU实例",
 		},
 		{
+			Command:     "startcpu",
+			Description: "启动GPU实例(无卡模式)",
+		},
+		{
 			Command:     "stop",
 			Description: "关闭GPU实例",
 		},
@@ -166,6 +170,7 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 /password - 设置AutoDL密码
 /gpuvalid - 查看所有GPU实例空闲情况
 /start - 打开实例
+/startcpu - 打开实例(无卡模式)
 /stop - 关闭实例
 /getuser - 列出当前已设置的用户`
 
@@ -206,7 +211,7 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 			reply = gpuStatus
 		}
 
-	case "start":
+	case "start", "startcpu":
 		if msg.CommandArguments() == "" {
 			reply = "请在命令后附带实例UUID，例如：/start xx-yy"
 		} else if b.autodl == nil {
@@ -216,8 +221,9 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 				break
 			}
 		} else {
+			useCPU := msg.Command() == "startcpu"
 			uuid := msg.CommandArguments()
-			err := b.autodl.PowerOn(uuid)
+			err := b.autodl.PowerOn(uuid, useCPU)
 			if err != nil {
 				reply = err.Error()
 			} else {
