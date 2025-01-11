@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -67,6 +68,10 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 		{
 			Command:     "stop",
 			Description: "关闭GPU实例",
+		},
+		{
+			Command:     "refresh",
+			Description: "刷新GPU实例释放时长",
 		},
 		{
 			Command:     "getuser",
@@ -172,6 +177,7 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 /start - 打开实例
 /startcpu - 打开实例(无卡模式)
 /stop - 关闭实例
+/refresh - 刷新实例释放时长
 /getuser - 列出当前已设置的用户`
 
 	case "user":
@@ -246,6 +252,32 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 				reply = err.Error()
 			} else {
 				reply = fmt.Sprintf("实例 %s 关机成功", uuid)
+			}
+		}
+	case "refresh":
+		if msg.CommandArguments() == "" {
+			reply = "请在命令后附带实例UUID，例如：/refresh xx-yy"
+		} else if b.autodl == nil {
+			err := b.initAutoDLClient(int(msg.From.ID))
+			if err != nil {
+				reply = err.Error()
+				break
+			}
+		} else {
+			uuid := msg.CommandArguments()
+			err := b.autodl.PowerOn(uuid, true)
+			if err != nil {
+				reply = err.Error()
+			} else {
+				reply = fmt.Sprintf("实例 %s 无卡模式开机成功，10秒后关机", uuid)
+				go func() {
+					// 10秒后关机
+					<-time.After(10 * time.Second)
+					err := b.autodl.PowerOff(uuid)
+					if err != nil {
+						log.Printf("刷新实例 %s 释放时长失败: %v", uuid, err)
+					}
+				}()
 			}
 		}
 
