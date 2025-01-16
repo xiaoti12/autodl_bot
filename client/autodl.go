@@ -20,6 +20,7 @@ const (
 	InstancePath = "/instance"
 	PowerOnPath  = "/instance/power_on"
 	PowerOffPath = "/instance/power_off"
+	BalancePath  = "/wallet"
 )
 
 type AutoDLClient struct {
@@ -234,6 +235,31 @@ func (c *AutoDLClient) PowerOff(uuid string) error {
 
 	log.Printf("[INFO] 用户%s实例 %s 关机成功", c.username, uuid)
 	return nil
+}
+
+func (c *AutoDLClient) GetBalance() (float64, error) {
+	token := c.getToken()
+	if token == "" {
+		log.Printf("[INFO] 用户%stoken不存在，重新登录", c.username)
+		if err := c.Login(); err != nil {
+			return 0, err
+		}
+		token = c.getToken()
+	}
+	var response models.WalletResponse
+	_, err := c.client.R().
+		SetHeader("authorization", token).
+		SetResult(&response).
+		Get(BalancePath)
+	if err != nil {
+		return 0, fmt.Errorf("获取余额请求失败: %v", err)
+	}
+	if response.Code != "Success" {
+		return 0, fmt.Errorf("获取余额失败: %s", response.Msg)
+	}
+	log.Printf("[INFO] 用户%s获取余额成功", c.username)
+	balance := float64(response.Data.Assets) / 1000
+	return balance, nil
 }
 
 func HashPassword(rawPassword string) string {

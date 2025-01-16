@@ -77,6 +77,10 @@ func NewBot(token string, proxy *http.Client) (*Bot, error) {
 			Command:     "getuser",
 			Description: "列出当前用户",
 		},
+		{
+			Command:     "balance",
+			Description: "查看用户余额",
+		},
 	}
 
 	// 设置命令菜单
@@ -178,7 +182,8 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 /startcpu - 打开实例(无卡模式)
 /stop - 关闭实例
 /refresh - 刷新实例释放时长
-/getuser - 列出当前已设置的用户`
+/getuser - 列出当前已设置的用户
+/balance - 查看用户余额`
 
 	case "user":
 		if msg.CommandArguments() == "" {
@@ -279,6 +284,20 @@ func (b *Bot) Command(msg *tgbotapi.Message, cfg *models.AutoDLConfig) {
 					}
 				}()
 			}
+		}
+	case "balance":
+		if b.autodl == nil {
+			err := b.initAutoDLClient(int(msg.From.ID))
+			if err != nil {
+				reply = err.Error()
+				break
+			}
+		}
+		balance, err := b.autodl.GetBalance()
+		if err != nil {
+			reply = err.Error()
+		} else {
+			reply = fmt.Sprintf("当前余额: %.2f元", balance)
 		}
 
 	case "getuser":

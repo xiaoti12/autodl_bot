@@ -65,6 +65,14 @@ type PowerResponse struct {
 	Msg  string `json:"msg"`
 }
 
+type WalletResponse struct {
+	Code string `json:"code"`
+	Data struct {
+		Assets int `json:"assets"`
+	} `json:"data"`
+	Msg string `json:"msg"`
+}
+
 type AutoDLConfig struct {
 	Username string
 	Password string
