@@ -1,4 +1,5 @@
 一个用于监控和管理AutoDL平台中GPU的Telegram Bot程序
+体验地址：t.me/autodl_mg_bot
 
 # 支持功能
 
